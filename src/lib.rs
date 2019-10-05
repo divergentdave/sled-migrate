@@ -82,9 +82,11 @@ fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
     }
 }
 
+type BoxedKeyValIter = Box<dyn Iterator<Item = Vec<Vec<u8>>>>;
+
 trait SledAdapter {
-    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>;
-    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>);
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>;
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>);
     // fn checksum(&self) -> Result<u32>;
 }
 
@@ -97,7 +99,7 @@ impl Sled24 {
 }
 
 impl SledAdapter for Sled24 {
-    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)> {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
         // Export had not yet been implemented, so we replicate its function here.
         let mut ret = vec![];
 
@@ -109,7 +111,7 @@ impl SledAdapter for Sled24 {
                 let kv = kv.unwrap();
                 vec![kv.0.to_vec(), kv.1.to_vec()]
             }).collect();
-            let boxed_iter: Box<dyn Iterator<Item = Vec<Vec<u8>>>> = Box::new(kvs.into_iter());
+            let boxed_iter: BoxedKeyValIter = Box::new(kvs.into_iter());
             ret.push((
                 b"tree".to_vec(),
                 name,
@@ -120,7 +122,7 @@ impl SledAdapter for Sled24 {
         ret
     }
 
-    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>) {
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         // Import had not yet been implemented, so we replicate its function here.
         for (collection_type, collection_name, collection_boxed_iter) in export {
             match collection_type {
@@ -147,15 +149,15 @@ impl Sled25 {
 }
 
 impl SledAdapter for Sled25 {
-    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>) {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
             (collection_type, collection_name, Box::new(iter))
         }
 
         self.0.export().into_iter().map(mapfn).collect()
     }
 
-    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>) {
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         self.0.import(export)
     }
 }
@@ -169,15 +171,15 @@ impl Sled27 {
 }
 
 impl SledAdapter for Sled27 {
-    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>) {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
             (collection_type, collection_name, Box::new(iter))
         }
 
         self.0.export().into_iter().map(mapfn).collect()
     }
 
-    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>) {
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         self.0.import(export)
     }
 }
@@ -191,15 +193,15 @@ impl Sled28 {
 }
 
 impl SledAdapter for Sled28 {
-    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>) {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
             (collection_type, collection_name, Box::new(iter))
         }
 
         self.0.export().into_iter().map(mapfn).collect()
     }
 
-    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>) {
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         self.0.import(export)
     }
 }
