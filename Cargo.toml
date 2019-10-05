@@ -1,0 +1,14 @@
+[package]
+name = "sled-migrate"
+version = "0.1.0"
+authors = ["David Cook <divergentdave@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sled_0_24 = { version = "0.24", package = "sled" }
+sled_0_25 = { version = "0.25", package = "sled" }
+sled_0_27 = { version = "0.27", package = "sled" }
+sled_0_28 = { version = "0.28", package = "sled" }
+clap = "2.33.0"
