@@ -69,6 +69,12 @@ fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
         ver if ver == "0.24" => {
             Box::new(Sled24::open(&path).unwrap())
         }
+        ver if ver == "0.25" => {
+            Box::new(Sled25::open(&path).unwrap())
+        }
+        ver if ver == "0.27" => {
+            Box::new(Sled27::open(&path).unwrap())
+        }
         ver if ver == "0.28" => {
             Box::new(Sled28::open(&path).unwrap())
         }
@@ -132,21 +138,49 @@ impl SledAdapter for Sled24 {
     }
 }
 
-/*
 struct Sled25 (sled_0_25::Db);
 
-impl SledAdapter for Sled25 {
-    type E = sled_0_25::Error;
+impl Sled25 {
+    fn open<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self(sled_0_25::Db::open(path)?))
+    }
+}
 
+impl SledAdapter for Sled25 {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>) {
+            (collection_type, collection_name, Box::new(iter))
+        }
+
+        self.0.export().into_iter().map(mapfn).collect()
+    }
+
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>) {
+        self.0.import(export)
+    }
 }
 
 struct Sled27 (sled_0_27::Db);
 
-impl SledAdapter for Sled27 {
-    type E = sled_0_27::Error;
-
+impl Sled27 {
+    fn open<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self(sled_0_27::Db::open(path)?))
+    }
 }
-*/
+
+impl SledAdapter for Sled27 {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>) {
+            (collection_type, collection_name, Box::new(iter))
+        }
+
+        self.0.export().into_iter().map(mapfn).collect()
+    }
+
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, Box<dyn Iterator<Item = Vec<Vec<u8>>>>)>) {
+        self.0.import(export)
+    }
+}
 
 struct Sled28 (sled_0_28::Db);
 
