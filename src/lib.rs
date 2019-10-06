@@ -94,13 +94,13 @@ fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
 type BoxedError = Box<dyn std::error::Error>;
 
 trait TreeAdapter {
-    fn iter<'a>(&'a self) -> BoxedTreeIter<'a>;
+    fn iter(&self) -> BoxedTreeIter<'_>;
 }
 
 struct Tree24(Arc<sled_0_24::Tree>);
 
 impl TreeAdapter for Tree24 {
-    fn iter<'a>(&'a self) -> BoxedTreeIter<'a> {
+    fn iter(&self) -> BoxedTreeIter<'_> {
         Box::new(self.0.iter().map(|kv_res| {
             let (k, v) = kv_res?;
             Ok((k, v.to_vec()))
@@ -111,7 +111,7 @@ impl TreeAdapter for Tree24 {
 struct Tree25(Arc<sled_0_25::Tree>);
 
 impl TreeAdapter for Tree25 {
-    fn iter<'a>(&'a self) -> BoxedTreeIter<'a> {
+    fn iter(&self) -> BoxedTreeIter<'_> {
         Box::new(self.0.iter().map(|kv_res| {
             let (k, v) = kv_res?;
             Ok((k.to_vec(), v.to_vec()))
@@ -122,7 +122,7 @@ impl TreeAdapter for Tree25 {
 struct Tree27(Arc<sled_0_27::Tree>);
 
 impl TreeAdapter for Tree27 {
-    fn iter<'a>(&'a self) -> BoxedTreeIter<'a> {
+    fn iter(&self) -> BoxedTreeIter<'_> {
         Box::new(self.0.iter().map(|kv_res| {
             let (k, v) = kv_res?;
             Ok((k.to_vec(), v.to_vec()))
@@ -133,7 +133,7 @@ impl TreeAdapter for Tree27 {
 struct Tree28(sled_0_28::Tree);
 
 impl TreeAdapter for Tree28 {
-    fn iter<'a>(&'a self) -> BoxedTreeIter<'a> {
+    fn iter(&self) -> BoxedTreeIter<'_> {
         Box::new(self.0.iter().map(|kv_res| {
             let (k, v) = kv_res?;
             Ok((k.to_vec(), v.to_vec()))
@@ -149,7 +149,7 @@ trait SledAdapter {
     fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>;
     fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>);
     fn tree_names(&self) -> Vec<Vec<u8>>;
-    fn open_tree(&self, name: &Vec<u8>) -> Result<Box<dyn TreeAdapter>, BoxedError>;
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError>;
     fn checksum(&self) -> Result<u32, BoxedError>;
 }
 
@@ -206,7 +206,7 @@ impl SledAdapter for Sled24 {
         self.0.tree_names()
     }
 
-    fn open_tree(&self, name: &Vec<u8>) -> Result<Box<dyn TreeAdapter>, BoxedError> {
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
         Ok(Box::new(Tree24(self.0.open_tree(name)?)))
     }
 
@@ -240,7 +240,7 @@ impl SledAdapter for Sled25 {
         self.0.tree_names()
     }
 
-    fn open_tree(&self, name: &Vec<u8>) -> Result<Box<dyn TreeAdapter>, BoxedError> {
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
         Ok(Box::new(Tree25(self.0.open_tree(name)?)))
     }
 
@@ -274,7 +274,7 @@ impl SledAdapter for Sled27 {
         self.0.tree_names()
     }
 
-    fn open_tree(&self, name: &Vec<u8>) -> Result<Box<dyn TreeAdapter>, BoxedError> {
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
         Ok(Box::new(Tree27(self.0.open_tree(name)?)))
     }
 
@@ -308,7 +308,7 @@ impl SledAdapter for Sled28 {
         self.0.tree_names()
     }
 
-    fn open_tree(&self, name: &Vec<u8>) -> Result<Box<dyn TreeAdapter>, BoxedError> {
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
         Ok(Box::new(Tree28(self.0.open_tree(name)?)))
     }
 
