@@ -449,6 +449,7 @@ name = "sled-migrate"
 version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crc32fast 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",

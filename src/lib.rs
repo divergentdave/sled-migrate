@@ -61,7 +61,17 @@ pub fn main() {
     let in_adapter = open_dispatch(in_path, in_version);
     let out_adapter = open_dispatch(out_path, out_version);
 
+    let in_checksum = in_adapter.checksum().unwrap();
+
     out_adapter.import(in_adapter.export());
+
+    let out_checksum = out_adapter.checksum().unwrap();
+
+    if in_checksum == out_checksum {
+        println!("Migration auccessful");
+    } else {
+        panic!("Checksum of migrated database does not match, migration was unsuccessful!");
+    }
 }
 
 fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
@@ -87,7 +97,7 @@ type BoxedKeyValIter = Box<dyn Iterator<Item = Vec<Vec<u8>>>>;
 trait SledAdapter {
     fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>;
     fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>);
-    // fn checksum(&self) -> Result<u32>;
+    fn checksum(&self) -> Result<u32, Box<dyn std::error::Error>>;
 }
 
 struct Sled24 (sled_0_24::Db);
@@ -138,6 +148,27 @@ impl SledAdapter for Sled24 {
             }
         }
     }
+
+    fn checksum(&self) -> Result<u32, Box<dyn std::error::Error>> {
+        // Checksum was released after 0.28.0, so we replicate its function for earlier versions
+        let mut tree_names = self.0.tree_names();
+        tree_names.sort_unstable();
+
+        let mut hasher = crc32fast::Hasher::new();
+
+        for name in tree_names.into_iter() {
+            hasher.update(&name);
+
+            let tree = self.0.open_tree(&name).unwrap();
+            for kv_res in tree.iter() {
+                let (k, v) = kv_res?;
+                hasher.update(&k);
+                hasher.update(&v);
+            }
+        }
+
+        Ok(hasher.finalize())
+    }
 }
 
 struct Sled25 (sled_0_25::Db);
@@ -159,6 +190,27 @@ impl SledAdapter for Sled25 {
 
     fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         self.0.import(export)
+    }
+
+    fn checksum(&self) -> Result<u32, Box<dyn std::error::Error>> {
+        // Checksum was released after 0.28.0, so we replicate its function for earlier versions
+        let mut tree_names = self.0.tree_names();
+        tree_names.sort_unstable();
+
+        let mut hasher = crc32fast::Hasher::new();
+
+        for name in tree_names.into_iter() {
+            hasher.update(&name);
+
+            let tree = self.0.open_tree(&name).unwrap();
+            for kv_res in tree.iter() {
+                let (k, v) = kv_res?;
+                hasher.update(&k);
+                hasher.update(&v);
+            }
+        }
+
+        Ok(hasher.finalize())
     }
 }
 
@@ -182,6 +234,27 @@ impl SledAdapter for Sled27 {
     fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         self.0.import(export)
     }
+
+    fn checksum(&self) -> Result<u32, Box<dyn std::error::Error>> {
+        // Checksum was released after 0.28.0, so we replicate its function for earlier versions
+        let mut tree_names = self.0.tree_names();
+        tree_names.sort_unstable();
+
+        let mut hasher = crc32fast::Hasher::new();
+
+        for name in tree_names.into_iter() {
+            hasher.update(&name);
+
+            let tree = self.0.open_tree(&name).unwrap();
+            for kv_res in tree.iter() {
+                let (k, v) = kv_res?;
+                hasher.update(&k);
+                hasher.update(&v);
+            }
+        }
+
+        Ok(hasher.finalize())
+    }
 }
 
 struct Sled28 (sled_0_28::Db);
@@ -203,5 +276,26 @@ impl SledAdapter for Sled28 {
 
     fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
         self.0.import(export)
+    }
+
+    fn checksum(&self) -> Result<u32, Box<dyn std::error::Error>> {
+        // Checksum was released after 0.28.0, so we replicate its function for earlier versions
+        let mut tree_names = self.0.tree_names();
+        tree_names.sort_unstable();
+
+        let mut hasher = crc32fast::Hasher::new();
+
+        for name in tree_names.into_iter() {
+            hasher.update(&name);
+
+            let tree = self.0.open_tree(&name).unwrap();
+            for kv_res in tree.iter() {
+                let (k, v) = kv_res?;
+                hasher.update(&k);
+                hasher.update(&v);
+            }
+        }
+
+        Ok(hasher.finalize())
     }
 }
