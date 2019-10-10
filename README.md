@@ -31,7 +31,7 @@ OPTIONS:
 
 ## Versions
 
-Up through sled version 0.28, file format compatibility was determined by the minor version number of the pagecache crate. Subsequently, the pagecache crate was merged into the sled crate, and now file format compatibility is determined by the minor version number of the sled crate. `sled-migrate` uses the most recent release of each file format epoch.
+From sled version 0.25 through sled version 0.28, file format compatibility was determined by the minor version number of the pagecache crate. Subsequently, the pagecache crate was merged into the sled crate, and now file format compatibility is determined by the minor version number of the sled crate. `sled-migrate` uses the most recent release of each file format epoch.
 
 | sled version(s) | pagecache version | `--inver` / `--outver` choice |
 | --- | --- | --- |
