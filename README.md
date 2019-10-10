@@ -10,7 +10,7 @@ cargo run -- --inpath /my/original/database --inver 0.24 --outpath /my/converted
 
 ## Help Text
 
-```bash
+```
 sled-migrate 0.1.0
 David Cook <divergentdave@gmail.com>
 A small wrapper to migrate sled databases between file format-incompatible alpha and beta versions.
