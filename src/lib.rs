@@ -346,6 +346,9 @@ mod tests {
     use std::path::PathBuf;
 
     macro_rules! fill {
+        ($db:ident) => {
+            fill!($db, insert, remove)
+        };
         ($db:ident, $insert:ident, $remove:ident) => {
             $db.$insert(b"key", b"value").unwrap();
             $db.$insert(b"removed", b"todo").unwrap();
@@ -400,6 +403,42 @@ mod tests {
         migrate(from_dir, "0.24", to_dir.clone(), "0.25");
 
         let db = sled_0_25::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn migrate_25_27() {
+        let from_dir = PathBuf::from("db2527a");
+        let to_dir = PathBuf::from("db2527b");
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_25::Db::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+
+        migrate(from_dir, "0.25", to_dir.clone(), "0.27");
+
+        let db = sled_0_27::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn migrate_27_28() {
+        let from_dir = PathBuf::from("db2728a");
+        let to_dir = PathBuf::from("db2728b");
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_27::Db::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+
+        migrate(from_dir, "0.27", to_dir.clone(), "0.28");
+
+        let db = sled_0_28::Db::open(to_dir).unwrap();
         check!(db);
     }
 }
