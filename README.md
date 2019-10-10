@@ -24,7 +24,7 @@ FLAGS:
 
 OPTIONS:
         --inpath <PATH>       Input database path
-        --inver <VERSION>     Input database version [possible values: 0.24, 0.25, 0.27, 0.28]
+        --inver <VERSION>     Input database version [possible values: 0.24, 0.25, 0.28]
         --outpath <PATH>      Output database path
-        --outver <VERSION>    Output database version [possible values: 0.24, 0.25, 0.27, 0.28]
+        --outver <VERSION>    Output database version [possible values: 0.24, 0.25, 0.28]
 ```

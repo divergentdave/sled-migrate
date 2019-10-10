@@ -422,18 +422,6 @@ dependencies = [
 
 [[package]]
 name = "sled"
-version = "0.27.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "pagecache 0.19.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "parking_lot 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_bytes 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sled"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -452,7 +440,6 @@ dependencies = [
  "crc32fast 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sled 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -567,7 +554,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum serde_derive 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)" = "4b133a43a1ecd55d4086bd5b4dc6c1751c68b1bfbeba7a5040442022c7e7c02e"
 "checksum sled 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0a780266d241e270e52cab0010e11aecfc6d52e33aa98e52eb9792023abd23aa"
 "checksum sled 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)" = "79ce644ada8ff18b4cdd7a601a7b781b164016eef99d08a32a43160f7bfc1455"
-"checksum sled 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)" = "99cabe07a883d65580d45d73e5cdabacf1cf49695320d467b01ead4b7626da6f"
 "checksum sled 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9c3d0ffdcb80d10203517641c514b205d89541b001149df43ae6e902bc19809d"
 "checksum smallvec 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)" = "ab606a9c5e214920bb66c458cd7be8ef094f813f20fe77a54cc7dbfff220d4b7"
 "checksum strsim 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"

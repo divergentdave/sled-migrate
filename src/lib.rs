@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub fn main() {
-    let versions = ["0.24", "0.25", "0.27", "0.28"];
+    let versions = ["0.24", "0.25", "0.28"];
     let matches = App::new("sled-migrate")
         .version("0.1.0")
         .author("David Cook <divergentdave@gmail.com>")
@@ -81,7 +81,6 @@ fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
     match version {
         ver if ver == "0.24" => Box::new(Sled24::open(&path).unwrap()),
         ver if ver == "0.25" => Box::new(Sled25::open(&path).unwrap()),
-        ver if ver == "0.27" => Box::new(Sled27::open(&path).unwrap()),
         ver if ver == "0.28" => Box::new(Sled28::open(&path).unwrap()),
         ver => panic!("Unsupported version {}", ver),
     }
@@ -107,17 +106,6 @@ impl TreeAdapter for Tree24 {
 struct Tree25(Arc<sled_0_25::Tree>);
 
 impl TreeAdapter for Tree25 {
-    fn iter(&self) -> BoxedTreeIter<'_> {
-        Box::new(self.0.iter().map(|kv_res| {
-            let (k, v) = kv_res?;
-            Ok((k.to_vec(), v.to_vec()))
-        }))
-    }
-}
-
-struct Tree27(Arc<sled_0_27::Tree>);
-
-impl TreeAdapter for Tree27 {
     fn iter(&self) -> BoxedTreeIter<'_> {
         Box::new(self.0.iter().map(|kv_res| {
             let (k, v) = kv_res?;
@@ -239,42 +227,6 @@ impl SledAdapter for Sled25 {
 
     fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
         Ok(Box::new(Tree25(self.0.open_tree(name)?)))
-    }
-
-    fn checksum(&self) -> Result<u32, BoxedError> {
-        checksum_polyfill(self)
-    }
-}
-
-struct Sled27(sled_0_27::Db);
-
-impl Sled27 {
-    fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
-        Ok(Self(sled_0_27::Db::open(path)?))
-    }
-}
-
-impl SledAdapter for Sled27 {
-    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>(
-            (collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I),
-        ) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
-            (collection_type, collection_name, Box::new(iter))
-        }
-
-        self.0.export().into_iter().map(mapfn).collect()
-    }
-
-    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
-        self.0.import(export)
-    }
-
-    fn tree_names(&self) -> Vec<Vec<u8>> {
-        self.0.tree_names()
-    }
-
-    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
-        Ok(Box::new(Tree27(self.0.open_tree(name)?)))
     }
 
     fn checksum(&self) -> Result<u32, BoxedError> {
@@ -407,9 +359,9 @@ mod tests {
     }
 
     #[test]
-    fn migrate_25_27() {
-        let from_dir = PathBuf::from("db2527a");
-        let to_dir = PathBuf::from("db2527b");
+    fn migrate_25_28() {
+        let from_dir = PathBuf::from("db2528a");
+        let to_dir = PathBuf::from("db2528b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -418,25 +370,7 @@ mod tests {
         fill!(db);
         drop(db);
 
-        migrate(from_dir, "0.25", to_dir.clone(), "0.27");
-
-        let db = sled_0_27::Db::open(to_dir).unwrap();
-        check!(db);
-    }
-
-    #[test]
-    fn migrate_27_28() {
-        let from_dir = PathBuf::from("db2728a");
-        let to_dir = PathBuf::from("db2728b");
-
-        let _ = remove_dir_all(&from_dir);
-        let _ = remove_dir_all(&to_dir);
-
-        let db = sled_0_27::Db::open(&from_dir).unwrap();
-        fill!(db);
-        drop(db);
-
-        migrate(from_dir, "0.27", to_dir.clone(), "0.28");
+        migrate(from_dir, "0.25", to_dir.clone(), "0.28");
 
         let db = sled_0_28::Db::open(to_dir).unwrap();
         check!(db);
