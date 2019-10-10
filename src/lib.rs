@@ -17,7 +17,7 @@ pub fn main() {
                 .takes_value(true)
                 .value_name("PATH")
                 .required(true)
-                .help("Input database path")
+                .help("Input database path"),
         )
         .arg(
             Arg::with_name("inver")
@@ -26,7 +26,7 @@ pub fn main() {
                 .value_name("VERSION")
                 .required(true)
                 .possible_values(&versions)
-                .help("Input database version")
+                .help("Input database version"),
         )
         .arg(
             Arg::with_name("outpath")
@@ -34,7 +34,7 @@ pub fn main() {
                 .takes_value(true)
                 .value_name("PATH")
                 .required(true)
-                .help("Output database path")
+                .help("Output database path"),
         )
         .arg(
             Arg::with_name("outver")
@@ -43,7 +43,7 @@ pub fn main() {
                 .value_name("VERSION")
                 .required(true)
                 .possible_values(&versions)
-                .help("Output database version")
+                .help("Output database version"),
         )
         .get_matches();
 
@@ -79,18 +79,10 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
 
 fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
     match version {
-        ver if ver == "0.24" => {
-            Box::new(Sled24::open(&path).unwrap())
-        }
-        ver if ver == "0.25" => {
-            Box::new(Sled25::open(&path).unwrap())
-        }
-        ver if ver == "0.27" => {
-            Box::new(Sled27::open(&path).unwrap())
-        }
-        ver if ver == "0.28" => {
-            Box::new(Sled28::open(&path).unwrap())
-        }
+        ver if ver == "0.24" => Box::new(Sled24::open(&path).unwrap()),
+        ver if ver == "0.25" => Box::new(Sled25::open(&path).unwrap()),
+        ver if ver == "0.27" => Box::new(Sled27::open(&path).unwrap()),
+        ver if ver == "0.28" => Box::new(Sled28::open(&path).unwrap()),
         ver => panic!("Unsupported version {}", ver),
     }
 }
@@ -157,7 +149,7 @@ trait SledAdapter {
     fn checksum(&self) -> Result<u32, BoxedError>;
 }
 
-struct Sled24 (sled_0_24::Db);
+struct Sled24(sled_0_24::Db);
 
 impl Sled24 {
     fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
@@ -174,16 +166,15 @@ impl SledAdapter for Sled24 {
             let tree = self.0.open_tree(&name).unwrap();
             // Note that sled::Iter has a lifetime bounded by the Tree it came from,
             // so we have to .collect() it.
-            let kvs: Vec<Vec<Vec<u8>>> = tree.iter().map(|kv| {
-                let kv = kv.unwrap();
-                vec![kv.0.to_vec(), kv.1.to_vec()]
-            }).collect();
+            let kvs: Vec<Vec<Vec<u8>>> = tree
+                .iter()
+                .map(|kv| {
+                    let kv = kv.unwrap();
+                    vec![kv.0.to_vec(), kv.1.to_vec()]
+                })
+                .collect();
             let boxed_iter: BoxedKeyValIter = Box::new(kvs.into_iter());
-            ret.push((
-                b"tree".to_vec(),
-                name,
-                boxed_iter,
-            ));
+            ret.push((b"tree".to_vec(), name, boxed_iter));
         }
 
         ret
@@ -219,7 +210,7 @@ impl SledAdapter for Sled24 {
     }
 }
 
-struct Sled25 (sled_0_25::Db);
+struct Sled25(sled_0_25::Db);
 
 impl Sled25 {
     fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
@@ -229,7 +220,9 @@ impl Sled25 {
 
 impl SledAdapter for Sled25 {
     fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>(
+            (collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I),
+        ) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
             (collection_type, collection_name, Box::new(iter))
         }
 
@@ -253,7 +246,7 @@ impl SledAdapter for Sled25 {
     }
 }
 
-struct Sled27 (sled_0_27::Db);
+struct Sled27(sled_0_27::Db);
 
 impl Sled27 {
     fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
@@ -263,7 +256,9 @@ impl Sled27 {
 
 impl SledAdapter for Sled27 {
     fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>(
+            (collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I),
+        ) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
             (collection_type, collection_name, Box::new(iter))
         }
 
@@ -287,7 +282,7 @@ impl SledAdapter for Sled27 {
     }
 }
 
-struct Sled28 (sled_0_28::Db);
+struct Sled28(sled_0_28::Db);
 
 impl Sled28 {
     fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
@@ -297,7 +292,9 @@ impl Sled28 {
 
 impl SledAdapter for Sled28 {
     fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
-        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>((collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I)) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>(
+            (collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I),
+        ) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
             (collection_type, collection_name, Box::new(iter))
         }
 
