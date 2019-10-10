@@ -161,6 +161,14 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "hashbrown"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -217,6 +225,27 @@ version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "pagecache"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "bincode 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crc32fast 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crossbeam-epoch 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crossbeam-utils 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fs2 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fxhash 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hashbrown 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "historian 4.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rayon 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -398,6 +427,18 @@ dependencies = [
 
 [[package]]
 name = "sled"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "futures 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pagecache 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_bytes 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sled"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -438,6 +479,7 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "crc32fast 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sled 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sled 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -526,6 +568,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum fs2 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
 "checksum futures 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)" = "1b980f2816d6ee8673b6517b52cb0e808a180efc92e5c19d02cdda79066703ef"
 "checksum fxhash 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
+"checksum hashbrown 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "61e4900fa4e80b3d15c78a08ec8a08433246063fa7577e7b2c6426b3b21b1f79"
 "checksum hashbrown 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "29fba9abe4742d586dfd0c06ae4f7e73a1c2d86b856933509b269d82cdf06e18"
 "checksum historian 4.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "f653416eb756b69642a1f1498817970fafe409998a849622c27cc5b1b7df989c"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
@@ -535,6 +578,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum memoffset 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ce6075db033bbbb7ee5a0bbd3a3186bbae616f57fb001c485c7ff77955f8177f"
 "checksum nodrop 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "2f9667ddcc6cc8a43afc9b7917599d7216aa09c463919ea32c59ed6cac8bc945"
 "checksum num_cpus 1.10.1 (registry+https://github.com/rust-lang/crates.io-index)" = "bcef43580c035376c0705c42792c294b66974abbfd2789b511784023f71f3273"
+"checksum pagecache 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c80a12ef8ed999e6fe36378ffab4b801904260d49f0389555cc844f2ebf5f7f1"
 "checksum pagecache 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)" = "74a701d13e2f3ee32a50be43321da8f712cf1e6e9ff0e2be66ab7f5c6598a16a"
 "checksum pagecache 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)" = "990fda699871cfa5107ecf1ed5c54cf3ba77df6c4cd345ee4a8e46fd289e9b37"
 "checksum pagecache 0.19.4 (registry+https://github.com/rust-lang/crates.io-index)" = "3a3cb2f80e81d64e087e9de0dedd9d95c4360aae2822917d5e4994bf1b2e0070"
@@ -552,6 +596,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)" = "9796c9b7ba2ffe7a9ce53c2287dfc48080f4b2b362fcc245a259b3a7201119dd"
 "checksum serde_bytes 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)" = "45af0182ff64abaeea290235eb67da3825a576c5d53e642c4d5b652e12e6effc"
 "checksum serde_derive 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)" = "4b133a43a1ecd55d4086bd5b4dc6c1751c68b1bfbeba7a5040442022c7e7c02e"
+"checksum sled 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)" = "73a25c24d5f135b43b94e39f5722dbaf3923152e7fbc6dfa85cc800aeae09172"
 "checksum sled 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0a780266d241e270e52cab0010e11aecfc6d52e33aa98e52eb9792023abd23aa"
 "checksum sled 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)" = "79ce644ada8ff18b4cdd7a601a7b781b164016eef99d08a32a43160f7bfc1455"
 "checksum sled 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9c3d0ffdcb80d10203517641c514b205d89541b001149df43ae6e902bc19809d"

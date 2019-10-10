@@ -24,7 +24,19 @@ FLAGS:
 
 OPTIONS:
         --inpath <PATH>       Input database path
-        --inver <VERSION>     Input database version [possible values: 0.24, 0.25, 0.28]
+        --inver <VERSION>     Input database version [possible values: 0.23, 0.24, 0.25, 0.28]
         --outpath <PATH>      Output database path
-        --outver <VERSION>    Output database version [possible values: 0.24, 0.25, 0.28]
+        --outver <VERSION>    Output database version [possible values: 0.23, 0.24, 0.25, 0.28]
 ```
+
+## Versions
+
+Up through sled version 0.28, file format compatibility was determined by the minor version number of the pagecache crate. Subsequently, the pagecache crate was merged into the sled crate, and now file format compatibility is determined by the minor version number of the sled crate. `sled-migrate` uses the most recent release of each file format epoch.
+
+| sled version(s) | pagecache version | `--inver` / `--outver` choice |
+| (unreleased) | N/A | TBD |
+| --- | --- | --- |
+| 0.28 (0.27 and 0.26) | 0.19 | `0.28` |
+| 0.25 | 0.18 | `0.25` |
+| 0.24 | 0.17 | `0.24` |
+| 0.23 | 0.16 | `0.23` |
