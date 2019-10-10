@@ -353,6 +353,7 @@ mod tests {
             $db.$insert(b"foo", b"bar").unwrap();
             let tree = $db.open_tree(b"alternate tree").unwrap();
             tree.$insert(b"different data", b"AAAA").unwrap();
+            drop(tree);
         };
     }
 
