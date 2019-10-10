@@ -47,11 +47,15 @@ pub fn main() {
         )
         .get_matches();
 
-    let in_path: PathBuf = matches.value_of_os("inpath").unwrap().into();
+    let in_path = matches.value_of_os("inpath").unwrap().into();
     let in_version = matches.value_of("inver").unwrap();
-    let out_path: PathBuf = matches.value_of_os("outpath").unwrap().into();
+    let out_path = matches.value_of_os("outpath").unwrap().into();
     let out_version = matches.value_of("outver").unwrap();
 
+    migrate(in_path, in_version, out_path, out_version);
+}
+
+fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &str) {
     if !in_path.exists() {
         panic!("Input database {:?} does not exist", in_path);
     }
@@ -336,4 +340,68 @@ fn checksum_polyfill(adapter: &dyn SledAdapter) -> Result<u32, BoxedError> {
     }
 
     Ok(hasher.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::migrate;
+    use std::fs::remove_dir_all;
+    use std::path::PathBuf;
+
+    macro_rules! fill {
+        ($db:ident, $insert:ident, $remove:ident) => {
+            $db.$insert(b"key", b"value").unwrap();
+            $db.$insert(b"removed", b"todo").unwrap();
+            $db.$remove(b"removed").unwrap();
+            $db.$insert(b"foo", b"bar").unwrap();
+            let tree = $db.open_tree(b"alternate tree").unwrap();
+            tree.$insert(b"different data", b"AAAA").unwrap();
+        };
+    }
+
+    macro_rules! check {
+        ($db:ident) => {
+            assert_eq!(
+                $db.tree_names(),
+                vec![b"__sled__default".to_vec(), b"alternate tree".to_vec()]
+            );
+
+            let mut iter = $db
+                .iter()
+                .map(Result::unwrap)
+                .map(|(k, v)| (k.to_vec(), v.to_vec()));
+            assert_eq!(iter.next(), Some((b"foo".to_vec(), b"bar".to_vec())));
+            assert_eq!(iter.next(), Some((b"key".to_vec(), b"value".to_vec())));
+            assert_eq!(iter.next(), None);
+
+            let tree = $db.open_tree(b"alternate tree").unwrap();
+            let mut iter = tree
+                .iter()
+                .map(Result::unwrap)
+                .map(|(k, v)| (k.to_vec(), v.to_vec()));
+            assert_eq!(
+                iter.next(),
+                Some((b"different data".to_vec(), b"AAAA".to_vec()))
+            );
+            assert_eq!(iter.next(), None);
+        };
+    }
+
+    #[test]
+    fn migrate_24_25() {
+        let from_dir = PathBuf::from("db2425a");
+        let to_dir = PathBuf::from("db2425b");
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_24::Db::start_default(&from_dir).unwrap();
+        fill!(db, set, del);
+        drop(db);
+
+        migrate(from_dir, "0.24", to_dir.clone(), "0.25");
+
+        let db = sled_0_25::Db::open(to_dir).unwrap();
+        check!(db);
+    }
 }
