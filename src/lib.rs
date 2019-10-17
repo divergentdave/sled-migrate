@@ -66,11 +66,15 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
     let in_adapter = open_dispatch(in_path, in_version);
     let out_adapter = open_dispatch(out_path, out_version);
 
-    let in_checksum = in_adapter.checksum().unwrap();
+    let in_checksum = in_adapter
+        .checksum()
+        .expect("Couldn't calculate checksum of input database");
 
     out_adapter.import(in_adapter.export());
 
-    let out_checksum = out_adapter.checksum().unwrap();
+    let out_checksum = out_adapter
+        .checksum()
+        .expect("Couldn't calculate checksum of output database");
 
     if in_checksum != out_checksum {
         panic!("Checksum of migrated database does not match, migration was unsuccessful!");
@@ -79,11 +83,11 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
 
 fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
     match version {
-        ver if ver == "0.23" => Box::new(Sled23::open(&path).unwrap()),
-        ver if ver == "0.24" => Box::new(Sled24::open(&path).unwrap()),
-        ver if ver == "0.25" => Box::new(Sled25::open(&path).unwrap()),
-        ver if ver == "0.28" => Box::new(Sled28::open(&path).unwrap()),
-        ver if ver == "0.29" => Box::new(Sled29::open(&path).unwrap()),
+        ver if ver == "0.23" => Box::new(Sled23::open(&path).expect("Couldn't open database")),
+        ver if ver == "0.24" => Box::new(Sled24::open(&path).expect("Couldn't open database")),
+        ver if ver == "0.25" => Box::new(Sled25::open(&path).expect("Couldn't open database")),
+        ver if ver == "0.28" => Box::new(Sled28::open(&path).expect("Couldn't open database")),
+        ver if ver == "0.29" => Box::new(Sled29::open(&path).expect("Couldn't open database")),
         ver => panic!("Unsupported version {}", ver),
     }
 }
