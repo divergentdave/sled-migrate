@@ -93,49 +93,47 @@ trait TreeAdapter {
     fn iter(&self) -> BoxedTreeIter<'_>;
 }
 
+macro_rules! old_tree_adapter {
+    ($tree:ident) => {
+        impl TreeAdapter for $tree {
+            fn iter(&self) -> BoxedTreeIter<'_> {
+                Box::new(self.0.iter().map(|kv_res| {
+                    let (k, v) = kv_res?;
+                    Ok((k, v.to_vec()))
+                }))
+            }
+        }
+    };
+}
+
+macro_rules! new_tree_adapter {
+    ($tree:ident) => {
+        impl TreeAdapter for $tree {
+            fn iter(&self) -> BoxedTreeIter<'_> {
+                Box::new(self.0.iter().map(|kv_res| {
+                    let (k, v) = kv_res?;
+                    Ok((k.to_vec(), v.to_vec()))
+                }))
+            }
+        }
+    };
+}
+
 struct Tree23(Arc<sled_0_23::Tree>);
 
-impl TreeAdapter for Tree23 {
-    fn iter(&self) -> BoxedTreeIter<'_> {
-        Box::new(self.0.iter().map(|kv_res| {
-            let (k, v) = kv_res?;
-            Ok((k, v.to_vec()))
-        }))
-    }
-}
+old_tree_adapter!(Tree23);
 
 struct Tree24(Arc<sled_0_24::Tree>);
 
-impl TreeAdapter for Tree24 {
-    fn iter(&self) -> BoxedTreeIter<'_> {
-        Box::new(self.0.iter().map(|kv_res| {
-            let (k, v) = kv_res?;
-            Ok((k, v.to_vec()))
-        }))
-    }
-}
+old_tree_adapter!(Tree24);
 
 struct Tree25(Arc<sled_0_25::Tree>);
 
-impl TreeAdapter for Tree25 {
-    fn iter(&self) -> BoxedTreeIter<'_> {
-        Box::new(self.0.iter().map(|kv_res| {
-            let (k, v) = kv_res?;
-            Ok((k.to_vec(), v.to_vec()))
-        }))
-    }
-}
+new_tree_adapter!(Tree25);
 
 struct Tree28(sled_0_28::Tree);
 
-impl TreeAdapter for Tree28 {
-    fn iter(&self) -> BoxedTreeIter<'_> {
-        Box::new(self.0.iter().map(|kv_res| {
-            let (k, v) = kv_res?;
-            Ok((k.to_vec(), v.to_vec()))
-        }))
-    }
-}
+new_tree_adapter!(Tree28);
 
 type BoxedTreeIter<'a> = Box<(dyn Iterator<Item = Result<(Vec<u8>, Vec<u8>), BoxedError>> + 'a)>;
 
