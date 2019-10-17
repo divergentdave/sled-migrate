@@ -64,13 +64,16 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
     }
 
     let in_adapter = open_dispatch(in_path, in_version);
-    let out_adapter = open_dispatch(out_path, out_version);
+    let out_adapter = open_dispatch(out_path.clone(), out_version);
 
     let in_checksum = in_adapter
         .checksum()
         .expect("Couldn't calculate checksum of input database");
 
     out_adapter.import(in_adapter.export());
+
+    drop(out_adapter);
+    let out_adapter = open_dispatch(out_path, out_version);
 
     let out_checksum = out_adapter
         .checksum()
