@@ -72,9 +72,6 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
 
     out_adapter.import(in_adapter.export());
 
-    drop(out_adapter);
-    let out_adapter = open_dispatch(out_path, out_version);
-
     let out_checksum = out_adapter
         .checksum()
         .expect("Couldn't calculate checksum of output database");
