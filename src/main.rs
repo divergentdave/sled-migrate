@@ -1,4 +1,4 @@
 fn main() {
     sled_migrate::main();
-    println!("Migration auccessful");
+    println!("Migration successful");
 }
