@@ -1,9 +1,13 @@
 use clap::{App, Arg};
+use std::convert::TryInto;
+use std::fmt::{Display, Formatter};
+use std::fs::OpenOptions;
+use std::io::{self, BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-pub fn main() {
-    let versions = ["0.23", "0.24", "0.25", "0.28", "0.29"];
+pub fn main<I: Iterator<Item = String>>(args: I) {
+    let versions: Vec<&'static str> = SledVersion::LIST.iter().map(SledVersion::as_text).collect();
     let matches = App::new("sled-migrate")
         .version("0.1.0")
         .author("David Cook <divergentdave@gmail.com>")
@@ -24,7 +28,6 @@ pub fn main() {
                 .long("inver")
                 .takes_value(true)
                 .value_name("VERSION")
-                .required(true)
                 .possible_values(&versions)
                 .help("Input database version"),
         )
@@ -45,17 +48,34 @@ pub fn main() {
                 .possible_values(&versions)
                 .help("Output database version"),
         )
-        .get_matches();
+        .get_matches_from(args);
 
-    let in_path = matches.value_of_os("inpath").unwrap().into();
-    let in_version = matches.value_of("inver").unwrap();
-    let out_path = matches.value_of_os("outpath").unwrap().into();
-    let out_version = matches.value_of("outver").unwrap();
+    let in_path: PathBuf = matches.value_of_os("inpath").unwrap().into();
+    let out_path: PathBuf = matches.value_of_os("outpath").unwrap().into();
 
-    migrate(in_path, in_version, out_path, out_version);
+    let in_version = match matches.value_of("inver") {
+        Some(version) => match SledVersion::from_text(version) {
+            Some(version) => version,
+            None => panic!("Unsupporeted version {}", version),
+        }
+        None => match version_detect(&in_path) {
+            Ok(Some(version)) => version,
+            Ok(None) => panic!("Couldn't detect the input database's version. It is likely 0.24 or earlier. Specify its version with the \"--inver\" option."),
+            Err(err) => panic!("Error while reading input database {}", err),
+        }
+    };
+    let out_version = match matches.value_of("outver") {
+        Some(version) => match SledVersion::from_text(version) {
+            Some(version) => version,
+            None => panic!("Unsupporeted version {}", version),
+        },
+        None => panic!("Output database version is required"),
+    };
+
+    migrate(&in_path, in_version, &out_path, out_version);
 }
 
-fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &str) {
+fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version: SledVersion) {
     if !in_path.exists() {
         panic!("Input database {:?} does not exist", in_path);
     }
@@ -63,8 +83,8 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
         panic!("Output database {:?} already exists", out_path);
     }
 
-    let in_adapter = open_dispatch(in_path, in_version);
-    let out_adapter = open_dispatch(out_path.clone(), out_version);
+    let in_adapter = open_dispatch(&in_path, in_version);
+    let out_adapter = open_dispatch(&out_path, out_version);
 
     let in_checksum = in_adapter
         .checksum()
@@ -81,14 +101,74 @@ fn migrate(in_path: PathBuf, in_version: &str, out_path: PathBuf, out_version: &
     }
 }
 
-fn open_dispatch(path: PathBuf, version: &str) -> Box<dyn SledAdapter> {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SledVersion {
+    Sled23,
+    Sled24,
+    Sled25,
+    Sled28,
+    Sled29,
+}
+
+impl SledVersion {
+    const LIST: [Self; 5] = [
+        Self::Sled23,
+        Self::Sled24,
+        Self::Sled25,
+        Self::Sled28,
+        Self::Sled29,
+    ];
+
+    fn as_text(&self) -> &'static str {
+        match self {
+            Self::Sled23 => "0.23",
+            Self::Sled24 => "0.24",
+            Self::Sled25 => "0.25",
+            Self::Sled28 => "0.28",
+            Self::Sled29 => "0.29",
+        }
+    }
+
+    fn from_text(text: &str) -> Option<Self> {
+        match text {
+            "0.23" => Some(Self::Sled23),
+            "0.24" => Some(Self::Sled24),
+            "0.25" => Some(Self::Sled25),
+            "0.28" => Some(Self::Sled28),
+            "0.29" => Some(Self::Sled29),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug)]
+enum Error {
+    Io(io::Error),
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        match self {
+            Self::Io(err) => Display::fmt(err, f),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Error {
+        Error::Io(err)
+    }
+}
+
+fn open_dispatch(path: &Path, version: SledVersion) -> Box<dyn SledAdapter> {
     match version {
-        ver if ver == "0.23" => Box::new(Sled23::open(&path).expect("Couldn't open database")),
-        ver if ver == "0.24" => Box::new(Sled24::open(&path).expect("Couldn't open database")),
-        ver if ver == "0.25" => Box::new(Sled25::open(&path).expect("Couldn't open database")),
-        ver if ver == "0.28" => Box::new(Sled28::open(&path).expect("Couldn't open database")),
-        ver if ver == "0.29" => Box::new(Sled29::open(&path).expect("Couldn't open database")),
-        ver => panic!("Unsupported version {}", ver),
+        SledVersion::Sled23 => Box::new(Sled23::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled24 => Box::new(Sled24::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled25 => Box::new(Sled25::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled28 => Box::new(Sled28::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled29 => Box::new(Sled29::open(&path).expect("Couldn't open database")),
     }
 }
 
@@ -407,9 +487,70 @@ fn checksum_polyfill(adapter: &dyn SledAdapter) -> Result<u32, BoxedError> {
     Ok(hasher.finalize())
 }
 
+fn version_detect(path: &Path) -> Result<Option<SledVersion>, Error> {
+    let conf_path = path.join("conf");
+    let mut file = OpenOptions::new().read(true).open(conf_path)?;
+    let mut buf = vec![];
+    file.read_to_end(&mut buf)?;
+    if buf.len() <= 4 {
+        return Err(
+            io::Error::new(io::ErrorKind::UnexpectedEof, "configuration file too short").into(),
+        );
+    }
+    let crc_vec = buf.split_off(buf.len() - 4);
+    let crc_arr = (&crc_vec[..]).try_into().unwrap();
+    let crc_expected = u32::from_le_bytes(crc_arr);
+    let mut hasher = crc32fast::Hasher::new();
+    hasher.update(&buf);
+    let crc_actual = hasher.finalize();
+    assert_eq!(crc_actual, crc_expected);
+
+    Ok(version_detect_config(&buf))
+}
+
+fn version_detect_config(buf: &[u8]) -> Option<SledVersion> {
+    // can only detect 0.25 and higher, earlier databases have no version info
+    let reader = BufReader::new(buf);
+
+    let mut utf8_clean = true;
+    let mut version_text = String::new();
+
+    for line in reader.lines() {
+        match line {
+            Ok(line) => {
+                if line.starts_with("version: ") {
+                    version_text = String::from(&line[9..]);
+                }
+            }
+            Err(_) => {
+                utf8_clean = false;
+                break;
+            }
+        }
+    }
+
+    if utf8_clean {
+        if let Some(version) = SledVersion::from_text(&version_text) {
+            return Some(version);
+        } else {
+            panic!("Unsupported version {}", version_text);
+        }
+    }
+
+    if buf.len() > 16 {
+        match buf[buf.len() - 16..] {
+            [0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0] => Some(SledVersion::Sled25),
+            [0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0] => Some(SledVersion::Sled28),
+            _ => None,
+        }
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::migrate;
+    use super::{main, migrate, version_detect_config, SledVersion};
     use std::fs::remove_dir_all;
     use std::path::PathBuf;
 
@@ -468,7 +609,40 @@ mod tests {
         fill!(db, set, del);
         drop(db);
 
-        migrate(from_dir, "0.23", to_dir.clone(), "0.24");
+        migrate(&from_dir, SledVersion::Sled23, &to_dir, SledVersion::Sled24);
+
+        let db = sled_0_24::Db::start_default(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn main_23_24() {
+        let from_str = "db2324c";
+        let to_str = "db2324d";
+        let from_dir = PathBuf::from(from_str);
+        let to_dir = PathBuf::from(to_str);
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_23::Db::start_default(&from_dir).unwrap();
+        fill!(db, set, del);
+        drop(db);
+
+        main(
+            vec![
+                String::from("sled-migrate"),
+                String::from("--inpath"),
+                String::from(from_str),
+                String::from("--inver"),
+                String::from("0.23"),
+                String::from("--outpath"),
+                String::from(to_str),
+                String::from("--outver"),
+                String::from("0.24"),
+            ]
+            .into_iter(),
+        );
 
         let db = sled_0_24::Db::start_default(to_dir).unwrap();
         check!(db);
@@ -486,7 +660,40 @@ mod tests {
         fill!(db, set, del);
         drop(db);
 
-        migrate(from_dir, "0.24", to_dir.clone(), "0.25");
+        migrate(&from_dir, SledVersion::Sled24, &to_dir, SledVersion::Sled25);
+
+        let db = sled_0_25::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn main_24_25() {
+        let from_str = "db2425c";
+        let to_str = "db2425d";
+        let from_dir = PathBuf::from(from_str);
+        let to_dir = PathBuf::from(to_str);
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_24::Db::start_default(&from_dir).unwrap();
+        fill!(db, set, del);
+        drop(db);
+
+        main(
+            vec![
+                String::from("sled-migrate"),
+                String::from("--inpath"),
+                String::from(from_str),
+                String::from("--inver"),
+                String::from("0.24"),
+                String::from("--outpath"),
+                String::from(to_str),
+                String::from("--outver"),
+                String::from("0.25"),
+            ]
+            .into_iter(),
+        );
 
         let db = sled_0_25::Db::open(to_dir).unwrap();
         check!(db);
@@ -504,7 +711,38 @@ mod tests {
         fill!(db);
         drop(db);
 
-        migrate(from_dir, "0.25", to_dir.clone(), "0.28");
+        migrate(&from_dir, SledVersion::Sled25, &to_dir, SledVersion::Sled28);
+
+        let db = sled_0_28::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn main_25_28() {
+        let from_str = "db2528c";
+        let to_str = "db2528d";
+        let from_dir = PathBuf::from(from_str);
+        let to_dir = PathBuf::from(to_str);
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_25::Db::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+
+        main(
+            vec![
+                String::from("sled-migrate"),
+                String::from("--inpath"),
+                String::from(from_str),
+                String::from("--outpath"),
+                String::from(to_str),
+                String::from("--outver"),
+                String::from("0.28"),
+            ]
+            .into_iter(),
+        );
 
         let db = sled_0_28::Db::open(to_dir).unwrap();
         check!(db);
@@ -522,9 +760,68 @@ mod tests {
         fill!(db);
         drop(db);
 
-        migrate(from_dir, "0.28", to_dir.clone(), "0.29");
+        migrate(&from_dir, SledVersion::Sled28, &to_dir, SledVersion::Sled29);
 
         let db = sled_0_29::Db::open(to_dir).unwrap();
         check!(db);
+    }
+
+    #[test]
+    fn main_28_29() {
+        let from_str = "db2829c";
+        let to_str = "db2829d";
+        let from_dir = PathBuf::from(from_str);
+        let to_dir = PathBuf::from(to_str);
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_28::Db::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+
+        main(
+            vec![
+                String::from("sled-migrate"),
+                String::from("--inpath"),
+                String::from(from_str),
+                String::from("--outpath"),
+                String::from(to_str),
+                String::from("--outver"),
+                String::from("0.29"),
+            ]
+            .into_iter(),
+        );
+
+        let db = sled_0_29::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn version_detection() {
+        fn drop_last_four_bytes(buf: &[u8]) -> &[u8] {
+            &buf[..buf.len() - 4]
+        }
+
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf23"))),
+            None
+        );
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf24"))),
+            None
+        );
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf25"))),
+            Some(SledVersion::Sled25)
+        );
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf28"))),
+            Some(SledVersion::Sled28)
+        );
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf29"))),
+            Some(SledVersion::Sled29)
+        );
     }
 }

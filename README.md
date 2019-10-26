@@ -16,7 +16,7 @@ David Cook <divergentdave@gmail.com>
 A small wrapper to migrate sled databases between file format-incompatible alpha and beta versions.
 
 USAGE:
-    sled-migrate --inpath <PATH> --inver <VERSION> --outpath <PATH> --outver <VERSION>
+    sled-migrate [OPTIONS] --inpath <PATH> --outpath <PATH> --outver <VERSION>
 
 FLAGS:
     -h, --help       Prints help information
