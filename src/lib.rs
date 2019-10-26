@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use fs2::FileExt;
 use std::convert::TryInto;
 use std::fmt::{Display, Formatter};
 use std::fs::OpenOptions;
@@ -92,6 +93,10 @@ fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version
 
     out_adapter.import(in_adapter.export());
 
+    drop(out_adapter);
+    block_file_unlocked(&out_path);
+    let out_adapter = open_dispatch(&out_path, out_version);
+
     let out_checksum = out_adapter
         .checksum()
         .expect("Couldn't calculate checksum of output database");
@@ -99,6 +104,16 @@ fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version
     if in_checksum != out_checksum {
         panic!("Checksum of migrated database does not match, migration was unsuccessful!");
     }
+}
+
+fn block_file_unlocked(path: &Path) {
+    let path = path.join("db");
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(&path)
+        .unwrap();
+    file.lock_exclusive().unwrap();
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
