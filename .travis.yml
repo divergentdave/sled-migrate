@@ -1,0 +1,21 @@
+dist: trusty
+language: rust
+rust: 1.37.0
+
+matrix:
+  include:
+    - os: linux
+    - os: osx
+
+before_install:
+  - rustup self update
+
+install:
+  - source ~/.cargo/env || true
+
+before_script:
+  - rustup component add rustfmt
+
+script:
+  - cargo fmt --all -- --check
+  - cargo test
