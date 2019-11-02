@@ -8,7 +8,11 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub fn main<I: Iterator<Item = String>>(args: I) {
-    let versions: Vec<&'static str> = SledVersion::LIST.iter().map(SledVersion::as_text).collect();
+    let versions: Vec<&'static str> = SledVersion::LIST
+        .iter()
+        .copied()
+        .map(SledVersion::as_text)
+        .collect();
     let matches = App::new("sled-migrate")
         .version("0.1.0")
         .author("David Cook <divergentdave@gmail.com>")
@@ -134,7 +138,7 @@ impl SledVersion {
         Self::Sled29,
     ];
 
-    fn as_text(&self) -> &'static str {
+    fn as_text(self) -> &'static str {
         match self {
             Self::Sled23 => "0.23",
             Self::Sled24 => "0.24",
