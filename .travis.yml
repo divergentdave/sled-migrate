@@ -1,6 +1,6 @@
 dist: trusty
 language: rust
-rust: 1.37.0
+rust: 1.39.0
 
 matrix:
   include:
