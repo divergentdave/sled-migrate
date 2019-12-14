@@ -1,2 +1,11 @@
+# Rust binaries
 /target
+
+# rustfmt backups
 **/*.rs.bk
+
+# sled database contents
+blobs/
+conf
+db
+snap.*
