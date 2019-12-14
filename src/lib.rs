@@ -127,15 +127,17 @@ enum SledVersion {
     Sled25,
     Sled28,
     Sled29,
+    Sled30,
 }
 
 impl SledVersion {
-    const LIST: [Self; 5] = [
+    const LIST: [Self; 6] = [
         Self::Sled23,
         Self::Sled24,
         Self::Sled25,
         Self::Sled28,
         Self::Sled29,
+        Self::Sled30,
     ];
 
     fn as_text(self) -> &'static str {
@@ -145,6 +147,7 @@ impl SledVersion {
             Self::Sled25 => "0.25",
             Self::Sled28 => "0.28",
             Self::Sled29 => "0.29",
+            Self::Sled30 => "0.30",
         }
     }
 
@@ -155,6 +158,7 @@ impl SledVersion {
             "0.25" => Some(Self::Sled25),
             "0.28" => Some(Self::Sled28),
             "0.29" => Some(Self::Sled29),
+            "0.30" => Some(Self::Sled30),
             _ => None,
         }
     }
@@ -188,6 +192,7 @@ fn open_dispatch(path: &Path, version: SledVersion) -> Box<dyn SledAdapter> {
         SledVersion::Sled25 => Box::new(Sled25::open(&path).expect("Couldn't open database")),
         SledVersion::Sled28 => Box::new(Sled28::open(&path).expect("Couldn't open database")),
         SledVersion::Sled29 => Box::new(Sled29::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled30 => Box::new(Sled30::open(&path).expect("Couldn't open database")),
     }
 }
 
@@ -242,6 +247,10 @@ new_tree_adapter!(Tree28);
 struct Tree29(sled_0_29::Tree);
 
 new_tree_adapter!(Tree29);
+
+struct Tree30(sled_0_30::Tree);
+
+new_tree_adapter!(Tree30);
 
 type BoxedTreeIter<'a> = Box<(dyn Iterator<Item = Result<(Vec<u8>, Vec<u8>), BoxedError>> + 'a)>;
 
@@ -478,6 +487,46 @@ impl SledAdapter for Sled29 {
 
     fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
         Ok(Box::new(Tree29(self.0.open_tree(name)?)))
+    }
+
+    fn checksum(&self) -> Result<u32, BoxedError> {
+        Ok(self.0.checksum()?)
+    }
+}
+
+struct Sled30(sled_0_30::Db);
+
+impl Sled30 {
+    fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
+        Ok(Self(sled_0_30::Db::open(path)?))
+    }
+}
+
+impl SledAdapter for Sled30 {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>(
+            (collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I),
+        ) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
+            (collection_type, collection_name, Box::new(iter))
+        }
+
+        self.0.export().into_iter().map(mapfn).collect()
+    }
+
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
+        self.0.import(export)
+    }
+
+    fn tree_names(&self) -> Vec<Vec<u8>> {
+        self.0
+            .tree_names()
+            .into_iter()
+            .map(|name| name.to_vec())
+            .collect()
+    }
+
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
+        Ok(Box::new(Tree30(self.0.open_tree(name)?)))
     }
 
     fn checksum(&self) -> Result<u32, BoxedError> {
@@ -817,6 +866,55 @@ mod tests {
     }
 
     #[test]
+    fn migrate_29_30() {
+        let from_dir = PathBuf::from("db2930a");
+        let to_dir = PathBuf::from("db2930b");
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_29::Db::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+
+        migrate(&from_dir, SledVersion::Sled29, &to_dir, SledVersion::Sled30);
+
+        let db = sled_0_30::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn main_29_30() {
+        let from_str = "db2930c";
+        let to_str = "db2930d";
+        let from_dir = PathBuf::from(from_str);
+        let to_dir = PathBuf::from(to_str);
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_29::Db::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+
+        main(
+            vec![
+                String::from("sled-migrate"),
+                String::from("--inpath"),
+                String::from(from_str),
+                String::from("--outpath"),
+                String::from(to_str),
+                String::from("--outver"),
+                String::from("0.30"),
+            ]
+            .into_iter(),
+        );
+
+        let db = sled_0_30::Db::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
     fn version_detection() {
         fn drop_last_four_bytes(buf: &[u8]) -> &[u8] {
             &buf[..buf.len() - 4]
@@ -841,6 +939,10 @@ mod tests {
         assert_eq!(
             version_detect_config(drop_last_four_bytes(include_bytes!("data/conf29"))),
             Some(SledVersion::Sled29)
+        );
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf30"))),
+            Some(SledVersion::Sled30)
         );
     }
 }
