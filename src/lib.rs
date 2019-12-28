@@ -618,7 +618,7 @@ fn version_detect_config(buf: &[u8]) -> Option<SledVersion> {
 
 #[cfg(test)]
 mod tests {
-    use super::{main, migrate, version_detect_config, SledVersion};
+    use super::{block_file_unlocked, main, migrate, version_detect_config, SledVersion};
     use std::fs::remove_dir_all;
     use std::path::PathBuf;
 
@@ -676,6 +676,7 @@ mod tests {
         let db = sled_0_23::Db::start_default(&from_dir).unwrap();
         fill!(db, set, del);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         migrate(&from_dir, SledVersion::Sled23, &to_dir, SledVersion::Sled24);
 
@@ -696,6 +697,7 @@ mod tests {
         let db = sled_0_23::Db::start_default(&from_dir).unwrap();
         fill!(db, set, del);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         main(
             vec![
@@ -727,6 +729,7 @@ mod tests {
         let db = sled_0_24::Db::start_default(&from_dir).unwrap();
         fill!(db, set, del);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         migrate(&from_dir, SledVersion::Sled24, &to_dir, SledVersion::Sled25);
 
@@ -747,6 +750,7 @@ mod tests {
         let db = sled_0_24::Db::start_default(&from_dir).unwrap();
         fill!(db, set, del);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         main(
             vec![
@@ -778,6 +782,7 @@ mod tests {
         let db = sled_0_25::Db::open(&from_dir).unwrap();
         fill!(db);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         migrate(&from_dir, SledVersion::Sled25, &to_dir, SledVersion::Sled28);
 
@@ -798,6 +803,7 @@ mod tests {
         let db = sled_0_25::Db::open(&from_dir).unwrap();
         fill!(db);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         main(
             vec![
@@ -827,6 +833,7 @@ mod tests {
         let db = sled_0_28::Db::open(&from_dir).unwrap();
         fill!(db);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         migrate(&from_dir, SledVersion::Sled28, &to_dir, SledVersion::Sled29);
 
@@ -847,6 +854,7 @@ mod tests {
         let db = sled_0_28::Db::open(&from_dir).unwrap();
         fill!(db);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         main(
             vec![
@@ -876,6 +884,7 @@ mod tests {
         let db = sled_0_29::Db::open(&from_dir).unwrap();
         fill!(db);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         migrate(&from_dir, SledVersion::Sled29, &to_dir, SledVersion::Sled30);
 
@@ -896,6 +905,7 @@ mod tests {
         let db = sled_0_29::Db::open(&from_dir).unwrap();
         fill!(db);
         drop(db);
+        block_file_unlocked(&from_dir);
 
         main(
             vec![
