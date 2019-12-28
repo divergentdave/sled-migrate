@@ -498,7 +498,7 @@ struct Sled30(sled_0_30::Db);
 
 impl Sled30 {
     fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
-        Ok(Self(sled_0_30::Db::open(path)?))
+        Ok(Self(sled_0_30::open(path)?))
     }
 }
 
@@ -879,7 +879,7 @@ mod tests {
 
         migrate(&from_dir, SledVersion::Sled29, &to_dir, SledVersion::Sled30);
 
-        let db = sled_0_30::Db::open(to_dir).unwrap();
+        let db = sled_0_30::open(to_dir).unwrap();
         check!(db);
     }
 
@@ -910,7 +910,7 @@ mod tests {
             .into_iter(),
         );
 
-        let db = sled_0_30::Db::open(to_dir).unwrap();
+        let db = sled_0_30::open(to_dir).unwrap();
         check!(db);
     }
 
