@@ -5,7 +5,7 @@
 ## Example Usage
 
 ```bash
-cargo run -- --inpath /my/original/database --inver 0.24 --outpath /my/converted/database --outver 0.31
+cargo run -- --inpath /my/original/database --inver 0.24 --outpath /my/converted/database --outver 0.32
 ```
 
 ## Help Text
@@ -24,9 +24,9 @@ FLAGS:
 
 OPTIONS:
         --inpath <PATH>       Input database path
-        --inver <VERSION>     Input database version [possible values: 0.23, 0.24, 0.25, 0.28, 0.29, 0.30, 0.31]
+        --inver <VERSION>     Input database version [possible values: 0.23, 0.24, 0.25, 0.28, 0.29, 0.30, 0.31, 0.32]
         --outpath <PATH>      Output database path
-        --outver <VERSION>    Output database version [possible values: 0.23, 0.24, 0.25, 0.28, 0.29, 0.30, 0.31]
+        --outver <VERSION>    Output database version [possible values: 0.23, 0.24, 0.25, 0.28, 0.29, 0.30, 0.31, 0.32]
 ```
 
 ## Versions
@@ -35,6 +35,7 @@ From sled version 0.25 through sled version 0.28, file format compatibility was 
 
 | sled version(s) | pagecache version | `--inver` / `--outver` choice |
 | --- | --- | --- |
+| 0.32 | N/A | `0.32` |
 | 0.31 | N/A | `0.31` |
 | 0.30 | N/A | `0.30` |
 | 0.29 | N/A | `0.29` |

@@ -129,10 +129,11 @@ enum SledVersion {
     Sled29,
     Sled30,
     Sled31,
+    Sled32,
 }
 
 impl SledVersion {
-    const LIST: [Self; 7] = [
+    const LIST: [Self; 8] = [
         Self::Sled23,
         Self::Sled24,
         Self::Sled25,
@@ -140,6 +141,7 @@ impl SledVersion {
         Self::Sled29,
         Self::Sled30,
         Self::Sled31,
+        Self::Sled32,
     ];
 
     fn as_text(self) -> &'static str {
@@ -151,6 +153,7 @@ impl SledVersion {
             Self::Sled29 => "0.29",
             Self::Sled30 => "0.30",
             Self::Sled31 => "0.31",
+            Self::Sled32 => "0.32",
         }
     }
 
@@ -163,6 +166,7 @@ impl SledVersion {
             "0.29" => Some(Self::Sled29),
             "0.30" => Some(Self::Sled30),
             "0.31" => Some(Self::Sled31),
+            "0.32" => Some(Self::Sled32),
             _ => None,
         }
     }
@@ -198,6 +202,7 @@ fn open_dispatch(path: &Path, version: SledVersion) -> Box<dyn SledAdapter> {
         SledVersion::Sled29 => Box::new(Sled29::open(&path).expect("Couldn't open database")),
         SledVersion::Sled30 => Box::new(Sled30::open(&path).expect("Couldn't open database")),
         SledVersion::Sled31 => Box::new(Sled31::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled32 => Box::new(Sled32::open(&path).expect("Couldn't open database")),
     }
 }
 
@@ -261,9 +266,34 @@ struct Tree31(sled_0_31::Tree);
 
 new_tree_adapter!(Tree31);
 
+struct Tree32(sled_0_32::Tree);
+
+new_tree_adapter!(Tree32);
+
 type BoxedTreeIter<'a> = Box<(dyn Iterator<Item = Result<(Vec<u8>, Vec<u8>), BoxedError>> + 'a)>;
 
 type BoxedKeyValIter = Box<dyn Iterator<Item = Vec<Vec<u8>>>>;
+
+fn checksum_polyfill(adapter: &dyn SledAdapter) -> Result<u32, BoxedError> {
+    // Checksum was released in 0.29.0, so we replicate its function for earlier versions
+    let mut tree_names = adapter.tree_names();
+    tree_names.sort_unstable();
+
+    let mut hasher = crc32fast::Hasher::new();
+
+    for name in tree_names.into_iter() {
+        hasher.update(&name);
+
+        let tree = adapter.open_tree(&name)?;
+        for kv_res in tree.iter() {
+            let (k, v) = kv_res?;
+            hasher.update(&k);
+            hasher.update(&v);
+        }
+    }
+
+    Ok(hasher.finalize())
+}
 
 trait SledAdapter {
     fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>;
@@ -583,25 +613,44 @@ impl SledAdapter for Sled31 {
     }
 }
 
-fn checksum_polyfill(adapter: &dyn SledAdapter) -> Result<u32, BoxedError> {
-    // Checksum was released in 0.29.0, so we replicate its function for earlier versions
-    let mut tree_names = adapter.tree_names();
-    tree_names.sort_unstable();
+struct Sled32(sled_0_32::Db);
 
-    let mut hasher = crc32fast::Hasher::new();
+impl Sled32 {
+    fn open<P: AsRef<Path>>(path: P) -> Result<Self, BoxedError> {
+        Ok(Self(sled_0_32::open(path)?))
+    }
+}
 
-    for name in tree_names.into_iter() {
-        hasher.update(&name);
-
-        let tree = adapter.open_tree(&name)?;
-        for kv_res in tree.iter() {
-            let (k, v) = kv_res?;
-            hasher.update(&k);
-            hasher.update(&v);
+impl SledAdapter for Sled32 {
+    fn export(&self) -> Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)> {
+        fn mapfn<I: 'static + Iterator<Item = Vec<Vec<u8>>>>(
+            (collection_type, collection_name, iter): (Vec<u8>, Vec<u8>, I),
+        ) -> (Vec<u8>, Vec<u8>, BoxedKeyValIter) {
+            (collection_type, collection_name, Box::new(iter))
         }
+
+        self.0.export().into_iter().map(mapfn).collect()
     }
 
-    Ok(hasher.finalize())
+    fn import(&self, export: Vec<(Vec<u8>, Vec<u8>, BoxedKeyValIter)>) {
+        self.0.import(export)
+    }
+
+    fn tree_names(&self) -> Vec<Vec<u8>> {
+        self.0
+            .tree_names()
+            .into_iter()
+            .map(|name| name.to_vec())
+            .collect()
+    }
+
+    fn open_tree(&self, name: &[u8]) -> Result<Box<dyn TreeAdapter>, BoxedError> {
+        Ok(Box::new(Tree32(self.0.open_tree(name)?)))
+    }
+
+    fn checksum(&self) -> Result<u32, BoxedError> {
+        Ok(self.0.checksum()?)
+    }
 }
 
 fn version_detect(path: &Path) -> Result<Option<SledVersion>, Error> {
@@ -1025,6 +1074,57 @@ mod tests {
     }
 
     #[test]
+    fn migrate_31_32() {
+        let from_dir = PathBuf::from("dbs/db3132a");
+        let to_dir = PathBuf::from("dbs/db3132b");
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_31::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+        block_file_unlocked(&from_dir);
+
+        migrate(&from_dir, SledVersion::Sled31, &to_dir, SledVersion::Sled32);
+
+        let db = sled_0_32::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
+    fn main_31_32() {
+        let from_str = "dbs/db3132c";
+        let to_str = "dbs/db3132d";
+        let from_dir = PathBuf::from(from_str);
+        let to_dir = PathBuf::from(to_str);
+
+        let _ = remove_dir_all(&from_dir);
+        let _ = remove_dir_all(&to_dir);
+
+        let db = sled_0_31::open(&from_dir).unwrap();
+        fill!(db);
+        drop(db);
+        block_file_unlocked(&from_dir);
+
+        main(
+            vec![
+                String::from("sled-migrate"),
+                String::from("--inpath"),
+                String::from(from_str),
+                String::from("--outpath"),
+                String::from(to_str),
+                String::from("--outver"),
+                String::from("0.32"),
+            ]
+            .into_iter(),
+        );
+
+        let db = sled_0_32::open(to_dir).unwrap();
+        check!(db);
+    }
+
+    #[test]
     fn version_detection() {
         fn drop_last_four_bytes(buf: &[u8]) -> &[u8] {
             &buf[..buf.len() - 4]
@@ -1057,6 +1157,10 @@ mod tests {
         assert_eq!(
             version_detect_config(drop_last_four_bytes(include_bytes!("data/conf31"))),
             Some(SledVersion::Sled31)
+        );
+        assert_eq!(
+            version_detect_config(drop_last_four_bytes(include_bytes!("data/conf32"))),
+            Some(SledVersion::Sled32)
         );
     }
 }
