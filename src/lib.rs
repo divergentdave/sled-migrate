@@ -716,8 +716,8 @@ mod tests {
 
     #[test]
     fn migrate_23_24() {
-        let from_dir = PathBuf::from("db2324a");
-        let to_dir = PathBuf::from("db2324b");
+        let from_dir = PathBuf::from("dbs/db2324a");
+        let to_dir = PathBuf::from("dbs/db2324b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -735,8 +735,8 @@ mod tests {
 
     #[test]
     fn main_23_24() {
-        let from_str = "db2324c";
-        let to_str = "db2324d";
+        let from_str = "dbs/db2324c";
+        let to_str = "dbs/db2324d";
         let from_dir = PathBuf::from(from_str);
         let to_dir = PathBuf::from(to_str);
 
@@ -769,8 +769,8 @@ mod tests {
 
     #[test]
     fn migrate_24_25() {
-        let from_dir = PathBuf::from("db2425a");
-        let to_dir = PathBuf::from("db2425b");
+        let from_dir = PathBuf::from("dbs/db2425a");
+        let to_dir = PathBuf::from("dbs/db2425b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -788,8 +788,8 @@ mod tests {
 
     #[test]
     fn main_24_25() {
-        let from_str = "db2425c";
-        let to_str = "db2425d";
+        let from_str = "dbs/db2425c";
+        let to_str = "dbs/db2425d";
         let from_dir = PathBuf::from(from_str);
         let to_dir = PathBuf::from(to_str);
 
@@ -822,8 +822,8 @@ mod tests {
 
     #[test]
     fn migrate_25_28() {
-        let from_dir = PathBuf::from("db2528a");
-        let to_dir = PathBuf::from("db2528b");
+        let from_dir = PathBuf::from("dbs/db2528a");
+        let to_dir = PathBuf::from("dbs/db2528b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -841,8 +841,8 @@ mod tests {
 
     #[test]
     fn main_25_28() {
-        let from_str = "db2528c";
-        let to_str = "db2528d";
+        let from_str = "dbs/db2528c";
+        let to_str = "dbs/db2528d";
         let from_dir = PathBuf::from(from_str);
         let to_dir = PathBuf::from(to_str);
 
@@ -873,8 +873,8 @@ mod tests {
 
     #[test]
     fn migrate_28_29() {
-        let from_dir = PathBuf::from("db2829a");
-        let to_dir = PathBuf::from("db2829b");
+        let from_dir = PathBuf::from("dbs/db2829a");
+        let to_dir = PathBuf::from("dbs/db2829b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -892,8 +892,8 @@ mod tests {
 
     #[test]
     fn main_28_29() {
-        let from_str = "db2829c";
-        let to_str = "db2829d";
+        let from_str = "dbs/db2829c";
+        let to_str = "dbs/db2829d";
         let from_dir = PathBuf::from(from_str);
         let to_dir = PathBuf::from(to_str);
 
@@ -924,8 +924,8 @@ mod tests {
 
     #[test]
     fn migrate_29_30() {
-        let from_dir = PathBuf::from("db2930a");
-        let to_dir = PathBuf::from("db2930b");
+        let from_dir = PathBuf::from("dbs/db2930a");
+        let to_dir = PathBuf::from("dbs/db2930b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -943,8 +943,8 @@ mod tests {
 
     #[test]
     fn main_29_30() {
-        let from_str = "db2930c";
-        let to_str = "db2930d";
+        let from_str = "dbs/db2930c";
+        let to_str = "dbs/db2930d";
         let from_dir = PathBuf::from(from_str);
         let to_dir = PathBuf::from(to_str);
 
@@ -975,8 +975,8 @@ mod tests {
 
     #[test]
     fn migrate_30_31() {
-        let from_dir = PathBuf::from("db3031a");
-        let to_dir = PathBuf::from("db3031b");
+        let from_dir = PathBuf::from("dbs/db3031a");
+        let to_dir = PathBuf::from("dbs/db3031b");
 
         let _ = remove_dir_all(&from_dir);
         let _ = remove_dir_all(&to_dir);
@@ -994,8 +994,8 @@ mod tests {
 
     #[test]
     fn main_30_31() {
-        let from_str = "db3031c";
-        let to_str = "db3031d";
+        let from_str = "dbs/db3031c";
+        let to_str = "dbs/db3031d";
         let from_dir = PathBuf::from(from_str);
         let to_dir = PathBuf::from(to_str);
 
