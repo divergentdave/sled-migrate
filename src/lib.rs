@@ -108,6 +108,9 @@ fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version
     if in_checksum != out_checksum {
         panic!("Checksum of migrated database does not match, migration was unsuccessful!");
     }
+
+    drop(out_adapter);
+    block_file_unlocked(&out_path);
 }
 
 fn block_file_unlocked(path: &Path) {
