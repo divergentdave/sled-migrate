@@ -17,6 +17,6 @@ sled_0_31 = { version = "0.31", package = "sled" }
 sled_0_32 = { version = "0.32", package = "sled" }
 sled_0_33 = { version = "0.33", package = "sled" }
 sled_0_34 = { version = "0.34", package = "sled" }
-clap = "2.33.3"
+clap = "3.0.0"
 crc32fast = "1.2.2"
 fs2 = "0.4.3"
