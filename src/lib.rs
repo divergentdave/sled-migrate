@@ -635,9 +635,7 @@ fn version_detect(path: &Path) -> Result<Option<SledVersion>, Error> {
     let crc_vec = buf.split_off(buf.len() - 4);
     let crc_arr = (&crc_vec[..]).try_into().unwrap();
     let crc_expected = u32::from_le_bytes(crc_arr);
-    let mut hasher = crc32fast::Hasher::new();
-    hasher.update(&buf);
-    let crc_actual = hasher.finalize();
+    let crc_actual = crc32fast::hash(&buf);
     assert_eq!(crc_actual, crc_expected);
 
     Ok(version_detect_config(&buf))
