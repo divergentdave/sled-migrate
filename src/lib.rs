@@ -1,5 +1,6 @@
 use clap::{App, Arg};
 use fs2::FileExt;
+use once_cell::sync::Lazy;
 use std::convert::TryInto;
 use std::fmt::{Display, Formatter};
 use std::fs::OpenOptions;
@@ -7,13 +8,16 @@ use std::io::{self, BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-pub fn main<I: Iterator<Item = String>>(args: I) {
-    let versions: Vec<&'static str> = SledVersion::LIST
+static VERSIONS: Lazy<Vec<&'static str>> = Lazy::new(|| {
+    SledVersion::LIST
         .iter()
         .copied()
         .map(SledVersion::as_text)
-        .collect();
-    let matches = App::new("sled-migrate")
+        .collect()
+});
+
+fn app() -> App<'static> {
+    App::new("sled-migrate")
         .version("0.1.0")
         .author("David Cook <divergentdave@gmail.com>")
         .about(
@@ -21,39 +25,44 @@ pub fn main<I: Iterator<Item = String>>(args: I) {
              file format-incompatible alpha and beta versions.",
         )
         .arg(
-            Arg::with_name("inpath")
+            Arg::new("inpath")
                 .long("inpath")
                 .takes_value(true)
+                .allow_invalid_utf8(true)
                 .value_name("PATH")
                 .required(true)
                 .help("Input database path"),
         )
         .arg(
-            Arg::with_name("inver")
+            Arg::new("inver")
                 .long("inver")
                 .takes_value(true)
                 .value_name("VERSION")
-                .possible_values(&versions)
+                .possible_values(&*VERSIONS)
                 .help("Input database version"),
         )
         .arg(
-            Arg::with_name("outpath")
+            Arg::new("outpath")
                 .long("outpath")
                 .takes_value(true)
+                .allow_invalid_utf8(true)
                 .value_name("PATH")
                 .required(true)
                 .help("Output database path"),
         )
         .arg(
-            Arg::with_name("outver")
+            Arg::new("outver")
                 .long("outver")
                 .takes_value(true)
                 .value_name("VERSION")
                 .required(true)
-                .possible_values(&versions)
+                .possible_values(&*VERSIONS)
                 .help("Output database version"),
         )
-        .get_matches_from(args);
+}
+
+pub fn main<I: Iterator<Item = String>>(args: I) {
+    let matches = app().get_matches_from(args);
 
     let in_path: PathBuf = matches.value_of_os("inpath").unwrap().into();
     let out_path: PathBuf = matches.value_of_os("outpath").unwrap().into();
@@ -676,7 +685,7 @@ fn version_detect_config(buf: &[u8]) -> Option<SledVersion> {
 
 #[cfg(test)]
 mod tests {
-    use super::{block_file_unlocked, main, migrate, version_detect_config, SledVersion};
+    use super::{app, block_file_unlocked, main, migrate, version_detect_config, SledVersion};
     use std::fs::remove_dir_all;
     use std::path::PathBuf;
 
@@ -1232,5 +1241,10 @@ mod tests {
             version_detect_config(drop_last_four_bytes(include_bytes!("data/conf34"))),
             Some(SledVersion::Sled34)
         );
+    }
+
+    #[test]
+    fn verify_app() {
+        app().debug_assert();
     }
 }
