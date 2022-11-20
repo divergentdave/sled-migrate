@@ -1,4 +1,5 @@
-use clap::{App, Arg};
+use clap::value_parser;
+use clap::{builder::PossibleValuesParser, Arg, Command};
 use fs2::FileExt;
 use once_cell::sync::Lazy;
 use std::convert::TryInto;
@@ -16,8 +17,8 @@ static VERSIONS: Lazy<Vec<&'static str>> = Lazy::new(|| {
         .collect()
 });
 
-fn app() -> App<'static> {
-    App::new("sled-migrate")
+fn app() -> Command {
+    Command::new("sled-migrate")
         .version("0.1.0")
         .author("David Cook <divergentdave@gmail.com>")
         .about(
@@ -27,8 +28,8 @@ fn app() -> App<'static> {
         .arg(
             Arg::new("inpath")
                 .long("inpath")
-                .takes_value(true)
-                .allow_invalid_utf8(true)
+                .num_args(1)
+                .value_parser(value_parser!(PathBuf))
                 .value_name("PATH")
                 .required(true)
                 .help("Input database path"),
@@ -36,16 +37,16 @@ fn app() -> App<'static> {
         .arg(
             Arg::new("inver")
                 .long("inver")
-                .takes_value(true)
+                .num_args(1)
                 .value_name("VERSION")
-                .possible_values(&*VERSIONS)
+                .value_parser(PossibleValuesParser::new(&*VERSIONS))
                 .help("Input database version"),
         )
         .arg(
             Arg::new("outpath")
                 .long("outpath")
-                .takes_value(true)
-                .allow_invalid_utf8(true)
+                .num_args(1)
+                .value_parser(value_parser!(PathBuf))
                 .value_name("PATH")
                 .required(true)
                 .help("Output database path"),
@@ -53,10 +54,10 @@ fn app() -> App<'static> {
         .arg(
             Arg::new("outver")
                 .long("outver")
-                .takes_value(true)
+                .num_args(1)
                 .value_name("VERSION")
                 .required(true)
-                .possible_values(&*VERSIONS)
+                .value_parser(PossibleValuesParser::new(&*VERSIONS))
                 .help("Output database version"),
         )
 }
@@ -64,10 +65,10 @@ fn app() -> App<'static> {
 pub fn main<I: Iterator<Item = String>>(args: I) {
     let matches = app().get_matches_from(args);
 
-    let in_path: PathBuf = matches.value_of_os("inpath").unwrap().into();
-    let out_path: PathBuf = matches.value_of_os("outpath").unwrap().into();
+    let in_path: &PathBuf = matches.get_one("inpath").unwrap();
+    let out_path: &PathBuf = matches.get_one("outpath").unwrap();
 
-    let in_version = match matches.value_of("inver") {
+    let in_version = match matches.get_one::<String>("inver") {
         Some(version) => match SledVersion::from_text(version) {
             Some(version) => version,
             None => panic!("Unsupporeted version {}", version),
@@ -78,7 +79,7 @@ pub fn main<I: Iterator<Item = String>>(args: I) {
             Err(err) => panic!("Error while reading input database {}", err),
         }
     };
-    let out_version = match matches.value_of("outver") {
+    let out_version = match matches.get_one::<String>("outver") {
         Some(version) => match SledVersion::from_text(version) {
             Some(version) => version,
             None => panic!("Unsupporeted version {}", version),
