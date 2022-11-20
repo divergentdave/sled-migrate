@@ -2,7 +2,7 @@
 $ sled-migrate --help
 A small wrapper to migrate sled databases between file format-incompatible alpha and beta versions.
 
-Usage: sled-migrate [OPTIONS] --inpath <PATH> --outpath <PATH> --outver <VERSION>
+Usage: sled-migrate[EXE] [OPTIONS] --inpath <PATH> --outpath <PATH> --outver <VERSION>
 
 Options:
       --inpath <PATH>     Input database path
