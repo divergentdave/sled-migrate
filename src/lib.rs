@@ -73,7 +73,7 @@ pub fn main<I: Iterator<Item = String>>(args: I) {
             Some(version) => version,
             None => panic!("Unsupporeted version {}", version),
         }
-        None => match version_detect(&in_path) {
+        None => match version_detect(in_path) {
             Ok(Some(version)) => version,
             Ok(None) => panic!("Couldn't detect the input database's version. It is likely 0.24 or earlier. Specify its version with the \"--inver\" option."),
             Err(err) => panic!("Error while reading input database {}", err),
@@ -87,7 +87,7 @@ pub fn main<I: Iterator<Item = String>>(args: I) {
         None => panic!("Output database version is required"),
     };
 
-    migrate(&in_path, in_version, &out_path, out_version);
+    migrate(in_path, in_version, out_path, out_version);
 }
 
 fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version: SledVersion) {
@@ -98,8 +98,8 @@ fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version
         panic!("Output database {:?} already exists", out_path);
     }
 
-    let in_adapter = open_dispatch(&in_path, in_version);
-    let out_adapter = open_dispatch(&out_path, out_version);
+    let in_adapter = open_dispatch(in_path, in_version);
+    let out_adapter = open_dispatch(out_path, out_version);
 
     let in_checksum = in_adapter
         .checksum()
@@ -108,8 +108,8 @@ fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version
     out_adapter.import(in_adapter.export());
 
     drop(out_adapter);
-    block_file_unlocked(&out_path);
-    let out_adapter = open_dispatch(&out_path, out_version);
+    block_file_unlocked(out_path);
+    let out_adapter = open_dispatch(out_path, out_version);
 
     let out_checksum = out_adapter
         .checksum()
@@ -120,7 +120,7 @@ fn migrate(in_path: &Path, in_version: SledVersion, out_path: &Path, out_version
     }
 
     drop(out_adapter);
-    block_file_unlocked(&out_path);
+    block_file_unlocked(out_path);
 }
 
 fn block_file_unlocked(path: &Path) {
@@ -216,16 +216,16 @@ impl From<io::Error> for Error {
 
 fn open_dispatch(path: &Path, version: SledVersion) -> Box<dyn SledAdapter> {
     match version {
-        SledVersion::Sled23 => Box::new(Sled23::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled24 => Box::new(Sled24::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled25 => Box::new(Sled25::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled28 => Box::new(Sled28::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled29 => Box::new(Sled29::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled30 => Box::new(Sled30::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled31 => Box::new(Sled31::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled32 => Box::new(Sled32::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled33 => Box::new(Sled33::open(&path).expect("Couldn't open database")),
-        SledVersion::Sled34 => Box::new(Sled34::open(&path).expect("Couldn't open database")),
+        SledVersion::Sled23 => Box::new(Sled23::open(path).expect("Couldn't open database")),
+        SledVersion::Sled24 => Box::new(Sled24::open(path).expect("Couldn't open database")),
+        SledVersion::Sled25 => Box::new(Sled25::open(path).expect("Couldn't open database")),
+        SledVersion::Sled28 => Box::new(Sled28::open(path).expect("Couldn't open database")),
+        SledVersion::Sled29 => Box::new(Sled29::open(path).expect("Couldn't open database")),
+        SledVersion::Sled30 => Box::new(Sled30::open(path).expect("Couldn't open database")),
+        SledVersion::Sled31 => Box::new(Sled31::open(path).expect("Couldn't open database")),
+        SledVersion::Sled32 => Box::new(Sled32::open(path).expect("Couldn't open database")),
+        SledVersion::Sled33 => Box::new(Sled33::open(path).expect("Couldn't open database")),
+        SledVersion::Sled34 => Box::new(Sled34::open(path).expect("Couldn't open database")),
     }
 }
 
@@ -387,6 +387,7 @@ impl SledAdapter for Sled23 {
             let tree = self.0.open_tree(&name).unwrap();
             // Note that sled::Iter has a lifetime bounded by the Tree it came from,
             // so we have to .collect() it.
+            #[allow(clippy::needless_collect)]
             let kvs: Vec<Vec<Vec<u8>>> = tree
                 .iter()
                 .map(|kv| {
@@ -448,6 +449,7 @@ impl SledAdapter for Sled24 {
             let tree = self.0.open_tree(&name).unwrap();
             // Note that sled::Iter has a lifetime bounded by the Tree it came from,
             // so we have to .collect() it.
+            #[allow(clippy::needless_collect)]
             let kvs: Vec<Vec<Vec<u8>>> = tree
                 .iter()
                 .map(|kv| {
@@ -652,8 +654,8 @@ fn version_detect_config(buf: &[u8]) -> Option<SledVersion> {
     for line in reader.lines() {
         match line {
             Ok(line) => {
-                if line.starts_with("version: ") {
-                    version_text = String::from(&line[9..]);
+                if let Some(stripped) = line.strip_prefix("version: ") {
+                    version_text = stripped.to_string();
                 }
             }
             Err(_) => {
