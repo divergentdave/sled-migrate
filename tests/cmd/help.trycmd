@@ -9,7 +9,7 @@ Options:
       --inver <VERSION>   Input database version [possible values: 0.23, 0.24, 0.25, 0.28, 0.29, 0.30, 0.31, 0.32, 0.33, 0.34]
       --outpath <PATH>    Output database path
       --outver <VERSION>  Output database version [possible values: 0.23, 0.24, 0.25, 0.28, 0.29, 0.30, 0.31, 0.32, 0.33, 0.34]
-  -h, --help              Print help information
-  -V, --version           Print version information
+  -h, --help              Print help
+  -V, --version           Print version
 
 ```
