@@ -20,7 +20,7 @@ sled_0_34 = { version = "0.34", package = "sled" }
 clap = "4.1.1"
 crc32fast = "1.3.2"
 fs2 = "0.4.3"
-once_cell = "1.17.0"
+once_cell = "1.17.1"
 
 [dev-dependencies]
 trycmd = "0.14.10"
